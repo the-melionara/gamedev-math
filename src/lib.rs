@@ -1,14 +1,13 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+#![feature(portable_simd)]
+#![feature(const_fn_floating_point_arithmetic)]
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// Vectors
+#[cfg(feature = "vec2")] pub mod vector2;
+#[cfg(feature = "vec3")] pub mod vector3;
+#[cfg(feature = "vec4")] pub mod vector4;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+// Rects
+#[cfg(feature = "rect")] pub mod rect;
+
+// Matrices
+pub mod mat3x3;

@@ -6,3 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+[features]
+vec2 = []
+vec3 = []
+vec4 = []
+
+rect = ["vec2"]
+
+mat2x2 = ["vec2"]
+mat3x3 = ["vec3"]
+mat4x4 = ["vec4"]
+
+default = ["vec2", "vec3", "vec4", "rect", "mat2x2", "mat3x3", "mat4x4"]
