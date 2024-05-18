@@ -3,6 +3,18 @@ use std::{fmt::Display, ops::{Add, AddAssign, MulAssign, SubAssign, DivAssign, D
 #[cfg(feature = "vec2")]
 use crate::vector2::{Vector2bool, Vector2f32, Vector2f64, Vector2i32, Vector2u32};
 
+#[cfg(not(feature = "vec2"))] type Vector2bool = ();
+#[cfg(not(feature = "vec2"))] type Vector2f32 = ();
+#[cfg(not(feature = "vec2"))] type Vector2f64 = ();
+#[cfg(not(feature = "vec2"))] type Vector2i32 = ();
+#[cfg(not(feature = "vec2"))] type Vector2u32 = ();
+
+#[cfg(feature = "quaternion")]
+use crate::quaternion::{Quaternionf32, Quaternionf64};
+
+#[cfg(not(feature = "quaternion"))] type Quaternionf32 = ();
+#[cfg(not(feature = "quaternion"))] type Quaternionf64 = ();
+
 macro_rules! vec_type_gen {
     ($ident:ident, $typ:ty) => {
         #[repr(C)]
@@ -257,23 +269,20 @@ macro_rules! vec_scalar_impl_gen {
 }
 
 macro_rules! vec_float_impl_gen {
-    ($ident:ident, $typ:ty, $styp:ty) => {
+    ($ident:ident, $typ:ty, $styp:ty, $quat:tt) => {
         impl $ident {
-            //pub fn cross(self) -> Self {
-                //return Self(self.1, -self.0);
-            //}
-        
-            /// Rotates the vector by the rotation provided in radians.<br>
-            /// For rotations that need to match visuals, use `rotate_cw`
-            /*pub fn rotate(self, rot: $typ) -> Self {
-                return Self(self.0 * rot.cos() + self.1 * rot.sin(), self.0 * rot.sin() - self.1 * rot.cos());
+            pub fn cross(self, rhs: Self) -> Self {
+                return Self(self.1 * rhs.2 - rhs.1 * self.2, -self.0 * rhs.2 + rhs.0 * self.2, self.0 * rhs.1 - rhs.0 * self.1);
             }
         
-            /// Rotates the vector by the specified rotation, but in a way that matches up with visual rotations.
-            pub fn rotate_cw(self, rot: $typ) -> Self {
-                let rotated = self.rotate(rot);
-                return Self(rotated.0, -rotated.1);
-            }*/
+            #[cfg(feature = "quaternion")]
+            pub fn rotate(self, q: $quat) -> Self {
+                // optimized version by https://gamedev.stackexchange.com/questions/28395/rotating-vector3-by-a-quaternion
+                let u = q.vector();
+                let s = q.0;
+
+                return (u * u.dot(self) * 2.0) + self * (s * s - u.sqr_magnitude()) + (u.cross(self) * 2.0 * s);
+            }
         
         
             /// Returns the magnitude of the vector.
@@ -423,11 +432,11 @@ vec_scalar_impl_gen!(Vector3u32, u32, u32x4, 0, u32::MIN, u32::MAX);
 
 vec_base_impl_gen!(Vector3f32, Vector2f32, f32, 0.0);
 vec_scalar_impl_gen!(Vector3f32, f32, f32x4, 0.0, f32::NEG_INFINITY, f32::INFINITY);
-vec_float_impl_gen!(Vector3f32, f32, f32x4);
+vec_float_impl_gen!(Vector3f32, f32, f32x4, Quaternionf32);
 
 vec_base_impl_gen!(Vector3f64, Vector2f64, f64, 0.0);
 vec_scalar_impl_gen!(Vector3f64, f64, f64x4, 0.0, f64::NEG_INFINITY, f64::INFINITY);
-vec_float_impl_gen!(Vector3f64, f64, f64x4);
+vec_float_impl_gen!(Vector3f64, f64, f64x4, Quaternionf64);
 
 // |>    Generate Casts    <| //
 vec_conv_impl_gen!(Vector3i32, i32, Vector3u32, Vector3f32, Vector3f64);

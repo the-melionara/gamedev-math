@@ -14,8 +14,15 @@ vec4 = []
 
 rect = ["vec2"]
 
+quaternion = ["vec3"]
+
 mat2x2 = ["vec2"]
 mat3x3 = ["vec3"]
 mat4x4 = ["vec4"]
 
-default = ["vec2", "vec3", "vec4", "rect", "mat2x2", "mat3x3", "mat4x4"]
+tf3x3 = ["mat3x3", "vec2"]
+tf4x4 = ["mat4x4", "vec3", "quaternion"]
+
+lerp = []
+
+default = ["vec2", "vec3", "vec4", "rect", "mat2x2", "mat3x3", "mat4x4", "tf3x3", "tf4x4", "quaternion", "lerp"]

@@ -3,6 +3,21 @@ use std::{fmt::Display, ops::{Add, AddAssign, MulAssign, SubAssign, DivAssign, D
 #[cfg(feature = "vec2")]
 use crate::vector2::{Vector2bool, Vector2f32, Vector2f64, Vector2i32, Vector2u32};
 
+#[cfg(not(feature = "vec2"))] type Vector2bool = ();
+#[cfg(not(feature = "vec2"))] type Vector2f32 = ();
+#[cfg(not(feature = "vec2"))] type Vector2f64 = ();
+#[cfg(not(feature = "vec2"))] type Vector2i32 = ();
+#[cfg(not(feature = "vec2"))] type Vector2u32 = ();
+
+#[cfg(feature = "vec3")]
+use crate::vector3::{Vector3bool, Vector3f32, Vector3f64, Vector3i32, Vector3u32};
+
+#[cfg(not(feature = "vec3"))] type Vector3bool = ();
+#[cfg(not(feature = "vec3"))] type Vector3f32 = ();
+#[cfg(not(feature = "vec3"))] type Vector3f64 = ();
+#[cfg(not(feature = "vec3"))] type Vector3i32 = ();
+#[cfg(not(feature = "vec3"))] type Vector3u32 = ();
+
 macro_rules! vec_type_gen {
     ($ident:ident, $typ:ty) => {
         #[repr(C)]
@@ -92,6 +107,7 @@ macro_rules! vec_base_impl_gen {
                 return self.3;
             }
 
+
             #[cfg(feature = "vec2")]
             pub fn xy(self) -> $vec2 {
                 return $vec2(self.0, self.1);
@@ -115,6 +131,27 @@ macro_rules! vec_base_impl_gen {
             #[cfg(feature = "vec2")]
             pub fn yw(self) -> $vec2 {
                 return $vec2(self.1, self.3);
+            }
+
+
+            #[cfg(feature = "vec3")]
+            pub fn xyz(self) -> $vec3 {
+                return $vec3(self.0, self.1, self.2);
+            }
+        
+            #[cfg(feature = "vec3")]
+            pub fn xyw(self) -> $vec3 {
+                return $vec3(self.0, self.1, self.3);
+            }
+
+            #[cfg(feature = "vec3")]
+            pub fn xzw(self) -> $vec3 {
+                return $vec3(self.0, self.2, self.3);
+            }
+        
+            #[cfg(feature = "vec3")]
+            pub fn yzw(self) -> $vec3 {
+                return $vec3(self.1, self.2, self.3);
             }
 
         

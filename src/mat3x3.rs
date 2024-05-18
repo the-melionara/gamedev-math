@@ -1,127 +1,158 @@
-use std::ops::Mul;
+use std::{ops::{Index, IndexMut, Mul}};
 
-use crate::vector2::Vector2f32;
+use crate::vector3::{Vector3f32, Vector3f64};
 
-#[repr(C)]
-#[derive(Debug, Clone, PartialEq)]
-pub struct Matrix3x3 {
-    rows: [[f32; 3]; 3],
-}
+#[cfg(feature = "tf3x3")]
+use crate::vector2::{Vector2f32, Vector2f64};
 
-impl Matrix3x3 {
-    pub const IDENTITY: Self = Self { rows: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]] };
+#[cfg(not(feature = "tf3x3"))] type Vector2f32 = ();
+#[cfg(not(feature = "tf3x3"))] type Vector2f64 = ();
 
-    pub fn translate(&mut self, delta: Vector2f32) {
-        self.rows[0][2] += delta.0;
-        self.rows[1][2] -= delta.1;
-    }
+macro_rules! gen_mat {
+    ($ident:ident, $vec3:ident, $vec2:tt, $typ:ty) => {
+        #[repr(C)]
+        #[derive(Debug, Clone, PartialEq)]
+        pub struct $ident {
+            rows: [[$typ; 3]; 3],
+        }
 
-    pub fn scale(&mut self, mul: Vector2f32) {
-        self.rows[0][0] *= mul.0;
-        self.rows[1][0] *= mul.0;
-        self.rows[0][1] *= mul.1;
-        self.rows[1][1] *= mul.1;
-    }
+        impl $ident {
+            pub const IDENTITY: Self = Self { rows: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]] };
 
-    pub fn rotate(&mut self, rot: f32) {
-        let x = Vector2f32(self.rows[0][0], self.rows[1][0]).rotate(rot);
-        let y = Vector2f32(self.rows[0][1], self.rows[1][1]).rotate(rot);
+            pub fn new(rows: [[$typ; 3]; 3]) -> Self {
+                Self { rows }
+            }
 
-        self.rows[0][0] = x.0;
-        self.rows[1][0] = x.1;
+            pub fn new_with_vec(row0: $vec3, row1: $vec3, row2: $vec3) -> Self {
+                Self { rows: [
+                    [row0.0, row0.1, row0.2],
+                    [row1.0, row1.1, row1.2],
+                    [row2.0, row2.1, row2.2],
+                ] }
+            }
 
-        self.rows[0][1] = y.0;
-        self.rows[1][1] = y.1;
-    }
+            pub fn row(&self, row: usize) -> $vec3 {
+                assert!(row < 3);
+                return $vec3(self.rows[row][0], self.rows[row][1], self.rows[row][2]);
+            }
 
-    pub fn transform_matrix(pos: Vector2f32, rot: f32, scale: Vector2f32) -> Self {
-        let mut mat = Self::IDENTITY.clone();
-        mat.translate(pos);
-        mat.scale(scale);
-        mat.rotate(rot);
-        return mat;
-    }
+            pub fn col(&self, col: usize) -> $vec3 {
+                assert!(col < 3);
+                return $vec3(self.rows[0][col], self.rows[1][col], self.rows[2][col]);
+            }
 
-    pub fn inv_transform_matrix(pos: Vector2f32, rot: f32, scale: Vector2f32) -> Self {
-        let mut mat = Self::transform_matrix(pos, rot, scale);
-        mat.invert();
-        return mat;
-    }
+            #[cfg(feature = "tf3x3")]
+            pub fn tf_matrix(pos: $vec2, rot: $typ, scale: $vec2) -> Self {
+                let right = scale.xvec().rotate(rot);
+                let up = scale.yvec().rotate(rot);
 
-    pub fn cam_matrix(pos: Vector2f32, dims: Vector2f32) -> Self {
-        let mut mat = Self::IDENTITY.clone();
-        mat.rows[0][0] = 1.0 / dims.0;
-        mat.rows[1][1] = -1.0 / dims.1;
-        mat.rows[0][2] = -pos.0 / dims.0;
-        mat.rows[1][2] = -pos.1 / dims.1;
-        return mat;
-    }
+                return Self { rows: [
+                    [right.0, up.0, pos.0],
+                    [right.1, up.1, pos.1],
+                    [0.0, 0.0, 1.0],
+                ]}
+            }
 
-    pub fn determinant(&self) -> f32 {
-        return self.rows[0][0] * (self.rows[1][1] * self.rows[2][2] - self.rows[2][1] * self.rows[1][2]) -
-            self.rows[0][1] * (self.rows[1][0] * self.rows[2][2] - self.rows[2][0] * self.rows[1][2]) +
-            self.rows[0][2] * (self.rows[1][0] * self.rows[2][1] - self.rows[2][0] * self.rows[1][1])
-    }
+            pub fn determinant(&self) -> $typ {
+                return self.rows[0][0] * (self.rows[1][1] * self.rows[2][2] - self.rows[2][1] * self.rows[1][2]) -
+                    self.rows[0][1] * (self.rows[1][0] * self.rows[2][2] - self.rows[2][0] * self.rows[1][2]) +
+                    self.rows[0][2] * (self.rows[1][0] * self.rows[2][1] - self.rows[2][0] * self.rows[1][1])
+            }
 
-    pub fn invert(&mut self) {
-        let det = self.determinant();
-        assert!(det != 0.0, "Matrix is not inversible.");
+            pub fn transp(&self) -> Self {
+                Self { rows: [
+                    [self.rows[0][0], self.rows[1][0], self.rows[2][0]],
+                    [self.rows[0][1], self.rows[1][1], self.rows[2][1]],
+                    [self.rows[0][2], self.rows[1][2], self.rows[2][2]],
+                ] }
+            }
 
-        let inv_det = 1.0 / det;
-        let src = self.rows.clone();
+            pub fn invert(&mut self) -> Option<()> {
+                let det = self.determinant();
+                if det == 0.0 {
+                    return None;
+                }
 
-        self.rows = [
-            [
-                (src[1][1] * src[2][2] - src[2][1] * src[1][2]) * inv_det,
-                -(src[1][0] * src[2][2] - src[2][0] * src[1][2]) * inv_det,
-                (src[1][0] * src[2][1] - src[2][0] * src[1][1]) * inv_det,
-            ],
-            [
-                -(src[0][1] * src[2][2] - src[2][1] * src[0][2]) * inv_det,
-                (src[0][0] * src[2][2] - src[2][0] * src[0][2]) * inv_det,
-                -(src[0][0] * src[2][1] - src[2][0] * src[0][1]) * inv_det,
-            ],
-            [
-                (src[0][1] * src[1][2] - src[1][1] * src[0][2]) * inv_det,
-                -(src[0][0] * src[1][2] - src[1][0] * src[0][2]) * inv_det,
-                (src[0][0] * src[1][1] - src[1][0] * src[0][1]) * inv_det,
-            ],
-        ]
-    }
+                let inv_det = 1.0 / det;
+                let src = self.rows.clone();
 
-    pub fn inverse(&self) -> Self {
-        let mut res = self.clone();
-        res.invert();
-        return res;
-    }
+                self.rows = [
+                    [
+                        (src[1][1] * src[2][2] - src[2][1] * src[1][2]) * inv_det,
+                        -(src[1][0] * src[2][2] - src[2][0] * src[1][2]) * inv_det,
+                        (src[1][0] * src[2][1] - src[2][0] * src[1][1]) * inv_det,
+                    ],
+                    [
+                        -(src[0][1] * src[2][2] - src[2][1] * src[0][2]) * inv_det,
+                        (src[0][0] * src[2][2] - src[2][0] * src[0][2]) * inv_det,
+                        -(src[0][0] * src[2][1] - src[2][0] * src[0][1]) * inv_det,
+                    ],
+                    [
+                        (src[0][1] * src[1][2] - src[1][1] * src[0][2]) * inv_det,
+                        -(src[0][0] * src[1][2] - src[1][0] * src[0][2]) * inv_det,
+                        (src[0][0] * src[1][1] - src[1][0] * src[0][1]) * inv_det,
+                    ],
+                ];
 
-    pub fn ptr(&self) -> *const f32 {
-        return self.rows.as_ptr() as *const f32;
-    }
-}
+                Some(())
+            }
 
-impl Mul for &Matrix3x3 {
-    type Output = Matrix3x3;
+            pub fn inverse(&self) -> Option<Self> {
+                let mut res = self.clone();
+                res.invert()?;
+                return Some(res);
+            }
 
-    fn mul(self, rhs: Self) -> Self::Output {
-        let mut res = Matrix3x3 { rows: [[0.0; 3]; 3] };
-        for i in 0..3 {
-            let (a, b, c) = (self.rows[i][0], self.rows[i][1], self.rows[i][2]);
-            for j in 0..3 {
-                res.rows[i][j] = a * rhs.rows[0][j] + b * rhs.rows[1][j] + c * rhs.rows[2][j];
+            pub fn ptr(&self) -> *const $typ {
+                return self.rows.as_ptr() as *const $typ;
             }
         }
-        return res;
-    }
+
+        impl Mul for &$ident {
+            type Output = $ident;
+
+            fn mul(self, rhs: Self) -> Self::Output {
+                let mut res = $ident { rows: [[0.0; 3]; 3] };
+                for i in 0..3 {
+                    for j in 0..3 {
+                        res.rows[i][j] = self.row(i).dot(rhs.col(i));
+                    }
+                }
+                return res;
+            }
+        }
+
+        impl Mul<$vec3> for &$ident {
+            type Output = $vec3;
+
+            fn mul(self, rhs: $vec3) -> Self::Output {
+                return $vec3(
+                    self.row(0).dot(rhs),
+                    self.row(1).dot(rhs),
+                    self.row(2).dot(rhs),
+                );
+            }
+        }
+
+        impl Index<(usize, usize)> for $ident {
+            type Output = $typ;
+
+            fn index(&self, index: (usize, usize)) -> &Self::Output {
+                assert!(index.0 < 3 && index.1 < 3, "Index out of bounds. (Index was {},{}; Size was 3x3)", index.0, index.1);
+                
+                return &self.rows[index.0][index.1];
+            }
+        }
+
+        impl IndexMut<(usize, usize)> for $ident {
+            fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+                assert!(index.0 < 3 && index.1 < 3, "Index out of bounds. (Index was {},{}; Size was 3x3)", index.0, index.1);
+
+                return &mut self.rows[index.0][index.1];
+            }
+        }
+    };
 }
 
-impl Mul<Vector2f32> for &Matrix3x3 {
-    type Output = Vector2f32;
-
-    fn mul(self, rhs: Vector2f32) -> Self::Output {
-        return Vector2f32(
-            self.rows[0][0] * rhs.0 + self.rows[0][1] * rhs.1 + self.rows[0][2],
-            self.rows[1][0] * rhs.0 + self.rows[1][1] * rhs.1 + self.rows[1][2]
-        );
-    }
-}
+gen_mat!(Matrix3x3f32, Vector3f32, Vector2f32, f32);
+gen_mat!(Matrix3x3f64, Vector3f64, Vector2f64, f64);
