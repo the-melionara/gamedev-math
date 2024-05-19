@@ -1,17 +1,6 @@
-use std::{ops::{Index, IndexMut, Mul}};
-
-use crate::vector4::{Vector4f32, Vector4f64};
-
-#[cfg(feature = "tf4x4")]
-use crate::{vector3::{Vector3f32, Vector3f64}, quaternion::{Quaternionf32, Quaternionf64}};
-
-#[cfg(not(feature = "tf4x4"))] type Vector3f32 = ();
-#[cfg(not(feature = "tf4x4"))] type Vector3f64 = ();
-#[cfg(not(feature = "tf4x4"))] type Quaternionf32 = ();
-#[cfg(not(feature = "tf4x4"))] type Quaternionf64 = ();
-
-macro_rules! gen_mat {
-    ($ident:ident, $vec4:ident, $vec3:tt, $quat:tt, $typ:ty) => {
+#[macro_export]
+macro_rules! gen_mat4x4 {
+    ($ident:ident, $vec4:ident, $typ:ty) => {
         #[repr(C)]
         #[derive(Debug, Clone, PartialEq)]
         pub struct $ident {
@@ -42,20 +31,6 @@ macro_rules! gen_mat {
             pub fn col(&self, col: usize) -> $vec4 {
                 assert!(col < 4);
                 return $vec4(self.rows[0][col], self.rows[1][col], self.rows[2][col], self.rows[3][col]);
-            }
-
-            #[cfg(feature = "tf4x4")]
-            pub fn tf_matrix(pos: $vec3, rot: $quat, scale: $vec3) -> Self {
-                let right = scale.xvec().rotate(rot);
-                let up = scale.yvec().rotate(rot);
-                let forw = scale.zvec().rotate(rot);
-
-                return Self { rows: [
-                    [right.0, up.0, forw.0, pos.0],
-                    [right.1, up.1, forw.1, pos.1],
-                    [right.2, up.2, forw.2, pos.2],
-                    [0.0, 0.0, 0.0, 1.0],
-                ]}
             }
 
             pub fn determinant(&self) -> $typ {
@@ -146,7 +121,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Mul for &$ident {
+        impl std::ops::Mul for &$ident {
             type Output = $ident;
 
             fn mul(self, rhs: Self) -> Self::Output {
@@ -160,7 +135,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Mul<$vec4> for &$ident {
+        impl std::ops::Mul<$vec4> for &$ident {
             type Output = $vec4;
 
             fn mul(self, rhs: $vec4) -> Self::Output {
@@ -173,7 +148,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Index<(usize, usize)> for $ident {
+        impl std::ops::Index<(usize, usize)> for $ident {
             type Output = $typ;
 
             fn index(&self, index: (usize, usize)) -> &Self::Output {
@@ -183,7 +158,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl IndexMut<(usize, usize)> for $ident {
+        impl std::ops::IndexMut<(usize, usize)> for $ident {
             fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
                 assert!(index.0 < 4 && index.1 < 4, "Index out of bounds. (Index was {},{}; Size was 4x4)", index.0, index.1);
 
@@ -193,5 +168,22 @@ macro_rules! gen_mat {
     };
 }
 
-gen_mat!(Matrix3x3f32, Vector4f32, Vector3f32, Quaternionf32, f32);
-gen_mat!(Matrix3x3f64, Vector4f64, Vector3f64, Quaternionf64, f64);
+#[macro_export]
+macro_rules! impl_tf4x4 {
+    ($ident:ident, $vec3:ident, $quat:ident) => {
+        impl $ident {
+            pub fn tf_matrix(pos: $vec3, rot: $quat, scale: $vec3) -> Self {
+                let right = scale.xvec().rotate(rot);
+                let up = scale.yvec().rotate(rot);
+                let forw = scale.zvec().rotate(rot);
+
+                return Self { rows: [
+                    [right.0, up.0, forw.0, pos.0],
+                    [right.1, up.1, forw.1, pos.1],
+                    [right.2, up.2, forw.2, pos.2],
+                    [0.0, 0.0, 0.0, 1.0],
+                ]}
+            }
+        }
+    };
+}

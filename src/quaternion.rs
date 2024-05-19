@@ -1,7 +1,4 @@
-use std::ops::{Add, AddAssign, Mul, MulAssign, Div, DivAssign};
-
-use crate::vector3::{Vector3f32, Vector3f64};
-
+#[macro_export]
 macro_rules! quat_gen {
     ($ident:ident, $vec:ident, $typ:ty) => {
         #[derive(Clone, Copy, Debug, PartialEq)]
@@ -95,7 +92,7 @@ macro_rules! quat_gen {
             }
         }
 
-        impl Add for $ident {
+        impl std::ops::Add for $ident {
             type Output = Self;
 
             fn add(self, rhs: Self) -> Self::Output {
@@ -103,13 +100,13 @@ macro_rules! quat_gen {
             }
         }
 
-        impl AddAssign for $ident {
+        impl std::ops::AddAssign for $ident {
             fn add_assign(&mut self, rhs: Self) {
                 *self = *self + rhs;
             }
         }
 
-        impl Mul<$typ> for $ident {
+        impl std::ops::Mul<$typ> for $ident {
             type Output = Self;
 
             fn mul(self, rhs: $typ) -> Self::Output {
@@ -117,13 +114,13 @@ macro_rules! quat_gen {
             }
         }
 
-        impl MulAssign<$typ> for $ident {
+        impl std::ops::MulAssign<$typ> for $ident {
             fn mul_assign(&mut self, rhs: $typ) {
                 *self = *self * rhs;
             }
         }
 
-        impl Div<$typ> for $ident {
+        impl std::ops::Div<$typ> for $ident {
             type Output = Self;
 
             fn div(self, rhs: $typ) -> Self::Output {
@@ -132,13 +129,13 @@ macro_rules! quat_gen {
             }
         }
 
-        impl DivAssign<$typ> for $ident {
+        impl std::ops::DivAssign<$typ> for $ident {
             fn div_assign(&mut self, rhs: $typ) {
                 *self = *self / rhs;
             }
         }
 
-        impl Mul for $ident {
+        impl std::ops::Mul for $ident {
             type Output = Self;
 
             fn mul(self, rhs: Self) -> Self::Output {
@@ -151,7 +148,7 @@ macro_rules! quat_gen {
             }
         }
 
-        impl MulAssign for $ident {
+        impl std::ops::MulAssign for $ident {
             fn mul_assign(&mut self, rhs: Self) {
                 *self = *self * rhs;
             }
@@ -164,6 +161,3 @@ macro_rules! quat_gen {
         }
     };
 }
-
-quat_gen!(Quaternionf32, Vector3f32, f32);
-quat_gen!(Quaternionf64, Vector3f64, f64);

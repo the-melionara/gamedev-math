@@ -1,15 +1,46 @@
-use std::{fmt::Display, ops::{Add, AddAssign, MulAssign, SubAssign, DivAssign, Div, Mul, Neg, Sub}, simd::{cmp::SimdOrd, f32x2, f64x2, i32x2, num::{SimdFloat, SimdInt, SimdUint}, u32x2, StdFloat}};
-
-macro_rules! vec_type_gen {
-    ($ident:ident, $typ:ty) => {
+#[macro_export]
+macro_rules! gen_vec2 {
+    ($ident:ident, $typ:ty, $zero:literal, $one:literal) => {
         #[repr(C)]
         #[derive(Clone, Copy, Debug, PartialEq)]
         pub struct $ident(pub $typ, pub $typ);
-    };
+
+        impl $ident {
+            pub fn x(self) -> $typ {
+                return self.0;
+            }
+
+            pub fn y(self) -> $typ {
+                return self.1;
+            }
+
+            pub fn set_x(&mut self, x: $typ) {
+                self.0 = x;
+            }
+
+            pub fn set_y(&mut self, y: $typ) {
+                self.1 = y;
+            }
+
+            pub fn xvec(self) -> Self {
+                return Self(self.0, $zero);
+            }
+
+            pub fn yvec(self) -> Self {
+                return Self($zero, self.1);
+            }
+        }
+
+        impl std::fmt::Display for $ident {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "({}, {})", self.0, self.1)
+            }
+        }
+    }
 }
 
-/// Implements unsigned constants
-macro_rules! uvec_const_gen {
+#[macro_export]
+macro_rules! unsigned_vec2_impl {
     ($ident:ident, $typ:ty, $zero:literal, $one:literal) => {
         impl $ident {
             pub const ZERO: Self = Self($zero, $zero);
@@ -32,8 +63,8 @@ macro_rules! uvec_const_gen {
     };
 }
 
-/// Implements signed contants
-macro_rules! svec_const_gen {
+#[macro_export]
+macro_rules! signed_vec2_impl {
     ($ident:ident, $typ:ty, $zero:literal, $one:literal) => {
         impl $ident {
             pub const DOWN: Self = Self::down($one);
@@ -50,43 +81,8 @@ macro_rules! svec_const_gen {
     };
 }
 
-macro_rules! vec_base_impl_gen {
-    ($ident:ident, $typ:ty, $zero:literal) => {
-        impl $ident {
-            pub fn x(self) -> $typ {
-                return self.0;
-            }
-        
-            pub fn y(self) -> $typ {
-                return self.1;
-            }
-        
-            pub fn set_x(&mut self, x: $typ) {
-                self.0 = x;
-            }
-        
-            pub fn set_y(&mut self, y: $typ) {
-                self.1 = y;
-            }
-        
-            pub fn xvec(self) -> Self {
-                return Self(self.0, $zero);
-            }
-        
-            pub fn yvec(self) -> Self {
-                return Self($zero, self.1);
-            }
-        }
-
-        impl Display for $ident {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "({}, {})", self.0, self.1)
-            }
-        }
-    };
-}
-
-macro_rules! vec_scalar_impl_gen {
+#[macro_export]
+macro_rules! scalar_vec2_impl {
     ($ident:ident, $typ:ty, $styp:ty) => {
         impl $ident {
             /// Creates a vector in the local space of a basis
@@ -146,7 +142,7 @@ macro_rules! vec_scalar_impl_gen {
             }
         }
 
-        impl Add for $ident {
+        impl std::ops::Add for $ident {
             type Output = Self;
         
             fn add(self, rhs: Self) -> Self::Output {
@@ -154,13 +150,13 @@ macro_rules! vec_scalar_impl_gen {
             }
         }
         
-        impl AddAssign for $ident {
+        impl std::ops::AddAssign for $ident {
             fn add_assign(&mut self, rhs: Self) {
                 *self = *self + rhs
             }
         }
         
-        impl Sub for $ident {
+        impl std::ops::Sub for $ident {
             type Output = Self;
         
             fn sub(self, rhs: Self) -> Self::Output {
@@ -168,13 +164,13 @@ macro_rules! vec_scalar_impl_gen {
             }
         }
 
-        impl SubAssign for $ident {
+        impl std::ops::SubAssign for $ident {
             fn sub_assign(&mut self, rhs: Self) {
                 *self = *self - rhs
             }
         }
 
-        impl Mul<$typ> for $ident {
+        impl std::ops::Mul<$typ> for $ident {
             type Output = Self;
         
             fn mul(self, rhs: $typ) -> Self::Output {
@@ -182,13 +178,13 @@ macro_rules! vec_scalar_impl_gen {
             }
         }
 
-        impl MulAssign<$typ> for $ident {
+        impl std::ops::MulAssign<$typ> for $ident {
             fn mul_assign(&mut self, rhs: $typ) {
                 *self = *self * rhs
             }
         }
         
-        impl Div<$typ> for $ident {
+        impl std::ops::Div<$typ> for $ident {
             type Output = Self;
         
             fn div(self, rhs: $typ) -> Self::Output {
@@ -196,19 +192,19 @@ macro_rules! vec_scalar_impl_gen {
             }
         }
 
-        impl DivAssign<$typ> for $ident {
+        impl std::ops::DivAssign<$typ> for $ident {
             fn div_assign(&mut self, rhs: $typ) {
                 *self = *self * rhs
             }
         }
         
-        impl From<($typ, $typ)> for $ident {
+        impl std::ops::From<($typ, $typ)> for $ident {
             fn from(value: ($typ, $typ)) -> Self {
                 Self(value.0, value.1)
             }
         }
         
-        impl From<$ident> for ($typ, $typ) {
+        impl std::ops::From<$ident> for ($typ, $typ) {
             fn from(value: $ident) -> Self {
                 (value.0, value.1)
             }
@@ -216,7 +212,8 @@ macro_rules! vec_scalar_impl_gen {
     };
 }
 
-macro_rules! vec_float_impl_gen {
+#[macro_export]
+macro_rules! float_vec2_impl {
     ($ident:ident, $typ:ty, $styp:ty) => {
         impl $ident {
             pub fn cross(self) -> Self {
@@ -326,7 +323,8 @@ macro_rules! vec_float_impl_gen {
     };
 }
 
-macro_rules! vec_conv_impl_gen {
+#[macro_export]
+macro_rules! cast_vec2_impl {
     ($ident:ident, $typ:ty, $vec_a:ty, $vec_b:ty, $vec_c:ty) => {
         impl From<$vec_a> for $ident {
             fn from(value: $vec_a) -> Self {
@@ -346,100 +344,4 @@ macro_rules! vec_conv_impl_gen {
             }
         }
     };
-}
-
-// |>    Generate Vectors    <| //
-vec_type_gen!(Vector2bool, bool);
-vec_type_gen!(Vector2i32, i32);
-vec_type_gen!(Vector2u32, u32);
-vec_type_gen!(Vector2f32, f32);
-vec_type_gen!(Vector2f64, f64);
-
-
-// |>    Generate Constants    <| //
-uvec_const_gen!(Vector2bool, bool, false, true);
-
-uvec_const_gen!(Vector2i32, i32, 0, 1);
-svec_const_gen!(Vector2i32, i32, 0, 1);
-
-uvec_const_gen!(Vector2u32, u32, 0, 1);
-
-uvec_const_gen!(Vector2f32, f32, 0.0, 1.0);
-svec_const_gen!(Vector2f32, f32, 0.0, 1.0);
-
-uvec_const_gen!(Vector2f64, f64, 0.0, 1.0);
-svec_const_gen!(Vector2f64, f64, 0.0, 1.0);
-
-
-// |>    Generate Impls    <| //
-vec_base_impl_gen!(Vector2bool, bool, false);
-
-vec_base_impl_gen!(Vector2i32, i32, 0);
-vec_scalar_impl_gen!(Vector2i32, i32, i32x2);
-
-vec_base_impl_gen!(Vector2u32, u32, 0);
-vec_scalar_impl_gen!(Vector2u32, u32, u32x2);
-
-vec_base_impl_gen!(Vector2f32, f32, 0.0);
-vec_scalar_impl_gen!(Vector2f32, f32, f32x2);
-vec_float_impl_gen!(Vector2f32, f32, f32x2);
-
-vec_base_impl_gen!(Vector2f64, f64, 0.0);
-vec_scalar_impl_gen!(Vector2f64, f64, f64x2);
-vec_float_impl_gen!(Vector2f64, f64, f64x2);
-
-
-// |>    Generate Casts    <| //
-vec_conv_impl_gen!(Vector2i32, i32, Vector2u32, Vector2f32, Vector2f64);
-vec_conv_impl_gen!(Vector2u32, u32, Vector2i32, Vector2f32, Vector2f64);
-vec_conv_impl_gen!(Vector2f32, f32, Vector2i32, Vector2u32, Vector2f64);
-vec_conv_impl_gen!(Vector2f64, f64, Vector2i32, Vector2u32, Vector2f32);
-
-impl From<Vector2bool> for Vector2i32 {
-    fn from(value: Vector2bool) -> Self {
-        Self(value.0 as i32, value.1 as i32)
-    }
-}
-
-impl From<Vector2bool> for Vector2u32 {
-    fn from(value: Vector2bool) -> Self {
-        Self(value.0 as u32, value.1 as u32)
-    }
-}
-
-impl From<Vector2bool> for Vector2f32 {
-    fn from(value: Vector2bool) -> Self {
-        Self(value.0 as i32 as f32, value.1 as i32 as f32)
-    }
-}
-
-impl From<Vector2bool> for Vector2f64 {
-    fn from(value: Vector2bool) -> Self {
-        Self(value.0 as i32 as f64, value.1 as i32 as f64)
-    }
-}
-
-
-impl From<Vector2i32> for Vector2bool {
-    fn from(value: Vector2i32) -> Self {
-        Self(value.0 != 0, value.1 != 0)
-    }
-}
-
-impl From<Vector2u32> for Vector2bool {
-    fn from(value: Vector2u32) -> Self {
-        Self(value.0 != 0, value.1 != 0)
-    }
-}
-
-impl From<Vector2f32> for Vector2bool {
-    fn from(value: Vector2f32) -> Self {
-        Self(value.0 != 0.0, value.1 != 0.0)
-    }
-}
-
-impl From<Vector2f64> for Vector2bool {
-    fn from(value: Vector2f64) -> Self {
-        Self(value.0 != 0.0, value.1 != 0.0)
-    }
 }

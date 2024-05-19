@@ -1,8 +1,5 @@
-use std::{ops::{Index, IndexMut, Mul}};
-
-use crate::vector2::{Vector2f32, Vector2f64};
-
-macro_rules! gen_mat {
+#[macro_export]
+macro_rules! gen_mat2x2 {
     ($ident:ident, $vec2:ident, $typ:ty) => {
         #[repr(C)]
         #[derive(Debug, Clone, PartialEq)]
@@ -73,7 +70,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Mul for &$ident {
+        impl std::ops::Mul for &$ident {
             type Output = $ident;
 
             fn mul(self, rhs: Self) -> Self::Output {
@@ -87,7 +84,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Mul<$vec2> for &$ident {
+        impl std::ops::Mul<$vec2> for &$ident {
             type Output = $vec2;
 
             fn mul(self, rhs: $vec2) -> Self::Output {
@@ -98,7 +95,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Index<(usize, usize)> for $ident {
+        impl std::ops::Index<(usize, usize)> for $ident {
             type Output = $typ;
 
             fn index(&self, index: (usize, usize)) -> &Self::Output {
@@ -108,7 +105,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl IndexMut<(usize, usize)> for $ident {
+        impl std::ops::IndexMut<(usize, usize)> for $ident {
             fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
                 assert!(index.0 < 2 && index.1 < 2, "Index out of bounds. (Index was {},{}; Size was 2x2)", index.0, index.1);
 
@@ -117,6 +114,3 @@ macro_rules! gen_mat {
         }
     };
 }
-
-gen_mat!(Matrix2x2f32, Vector2f32, f32);
-gen_mat!(Matrix2x2f64, Vector2f64, f64);

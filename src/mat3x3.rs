@@ -1,15 +1,6 @@
-use std::{ops::{Index, IndexMut, Mul}};
-
-use crate::vector3::{Vector3f32, Vector3f64};
-
-#[cfg(feature = "tf3x3")]
-use crate::vector2::{Vector2f32, Vector2f64};
-
-#[cfg(not(feature = "tf3x3"))] type Vector2f32 = ();
-#[cfg(not(feature = "tf3x3"))] type Vector2f64 = ();
-
-macro_rules! gen_mat {
-    ($ident:ident, $vec3:ident, $vec2:tt, $typ:ty) => {
+#[macro_export]
+macro_rules! gen_mat3x3 {
+    ($ident:ident, $vec3:ident, $typ:ty) => {
         #[repr(C)]
         #[derive(Debug, Clone, PartialEq)]
         pub struct $ident {
@@ -39,18 +30,6 @@ macro_rules! gen_mat {
             pub fn col(&self, col: usize) -> $vec3 {
                 assert!(col < 3);
                 return $vec3(self.rows[0][col], self.rows[1][col], self.rows[2][col]);
-            }
-
-            #[cfg(feature = "tf3x3")]
-            pub fn tf_matrix(pos: $vec2, rot: $typ, scale: $vec2) -> Self {
-                let right = scale.xvec().rotate(rot);
-                let up = scale.yvec().rotate(rot);
-
-                return Self { rows: [
-                    [right.0, up.0, pos.0],
-                    [right.1, up.1, pos.1],
-                    [0.0, 0.0, 1.0],
-                ]}
             }
 
             pub fn determinant(&self) -> $typ {
@@ -108,7 +87,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Mul for &$ident {
+        impl std::ops::Mul for &$ident {
             type Output = $ident;
 
             fn mul(self, rhs: Self) -> Self::Output {
@@ -122,7 +101,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Mul<$vec3> for &$ident {
+        impl std::ops::Mul<$vec3> for &$ident {
             type Output = $vec3;
 
             fn mul(self, rhs: $vec3) -> Self::Output {
@@ -134,7 +113,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl Index<(usize, usize)> for $ident {
+        impl std::ops::Index<(usize, usize)> for $ident {
             type Output = $typ;
 
             fn index(&self, index: (usize, usize)) -> &Self::Output {
@@ -144,7 +123,7 @@ macro_rules! gen_mat {
             }
         }
 
-        impl IndexMut<(usize, usize)> for $ident {
+        impl std::ops::IndexMut<(usize, usize)> for $ident {
             fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
                 assert!(index.0 < 3 && index.1 < 3, "Index out of bounds. (Index was {},{}; Size was 3x3)", index.0, index.1);
 
@@ -154,5 +133,20 @@ macro_rules! gen_mat {
     };
 }
 
-gen_mat!(Matrix3x3f32, Vector3f32, Vector2f32, f32);
-gen_mat!(Matrix3x3f64, Vector3f64, Vector2f64, f64);
+#[macro_export]
+macro_rules! impl_tf3x3 {
+    ($ident:ident, $vec2:ident, $typ:ty) => {
+        impl $ident {
+            pub fn tf_matrix(pos: $vec2, rot: $typ, scale: $vec2) -> Self {
+                let right = scale.xvec().rotate(rot);
+                let up = scale.yvec().rotate(rot);
+
+                return Self { rows: [
+                    [right.0, up.0, pos.0],
+                    [right.1, up.1, pos.1],
+                    [0.0, 0.0, 1.0],
+                ]}
+            }
+        }
+    };
+}
