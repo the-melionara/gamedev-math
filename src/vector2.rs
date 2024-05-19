@@ -198,13 +198,13 @@ macro_rules! scalar_vec2_impl {
             }
         }
         
-        impl std::ops::From<($typ, $typ)> for $ident {
+        impl From<($typ, $typ)> for $ident {
             fn from(value: ($typ, $typ)) -> Self {
                 Self(value.0, value.1)
             }
         }
         
-        impl std::ops::From<$ident> for ($typ, $typ) {
+        impl From<$ident> for ($typ, $typ) {
             fn from(value: $ident) -> Self {
                 (value.0, value.1)
             }
