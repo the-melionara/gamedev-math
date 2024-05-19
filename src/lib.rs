@@ -15,6 +15,3 @@ pub mod rect;
 pub mod mat2x2;
 pub mod mat3x3;
 pub mod mat4x4;
-
-// Utils
-pub mod lerp;
