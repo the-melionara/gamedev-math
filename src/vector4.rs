@@ -408,3 +408,54 @@ macro_rules! cast_vec4_impl {
         }
     };
 }
+
+#[macro_export]
+macro_rules! updim_vec4_impl {
+    (3, $ident:ident, $typ:ty, $vec:ty) => {
+        impl $ident {
+            pub fn from_xyz(xyz: $vec, w: $typ) -> Self {
+                Self(xyz.0, xyz.1, xyz.2, w)
+            }
+
+            pub fn from_xyw(xyw: $vec, z: $typ) -> Self {
+                Self(xyw.0, xyw.1, z, xyw.2)
+            }
+
+            pub fn from_xzw(xzw: $vec, y: $typ) -> Self {
+                Self(xzw.0, y, xzw.1, xzw.2)
+            }
+
+            pub fn from_yzw(x: $typ, yzw: $vec) -> Self {
+                Self(x, yzw.0, yzw.1, yzw.2)
+            }
+        }
+    };
+
+    (2, $ident:ident, $typ:ty, $vec:ty) => {
+        impl $ident {
+            pub fn from_xy(xy: $vec, z: $typ, w: $typ) -> Self {
+                Self(xy.0, xy.1, z, w)
+            }
+
+            pub fn from_xz(xz: $vec, y: $typ, w: $typ) -> Self {
+                Self(xz.0, y, xz.1, w)
+            }
+
+            pub fn from_yz(x: $typ, yz: $vec, w: $typ) -> Self {
+                Self(x, yz.0, yz.1, w)
+            }
+
+            pub fn from_xw(xw: $vec, y: $typ, z: $typ) -> Self {
+                Self(xw.0, y, z, xw.1)
+            }
+
+            pub fn from_yw(x: $typ, yw: $vec, z: $typ) -> Self {
+                Self(x, yw.0, z, yw.1)
+            }
+
+            pub fn from_zw(x: $typ, y: $typ, zw: $vec) -> Self {
+                Self(x, y, zw.0, zw.1)
+            }
+        }
+    };
+}

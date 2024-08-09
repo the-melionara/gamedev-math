@@ -382,3 +382,22 @@ macro_rules! cast_vec3_impl {
         }
     };
 }
+
+#[macro_export]
+macro_rules! updim_vec3_impl {
+    (2, $ident:ident, $typ:ty, $vec:ty) => {
+        impl $ident {
+            pub fn from_xy(xy: $vec, z: $typ) -> Self {
+                Self(xy.0, xy.1, z)
+            }
+
+            pub fn from_xz(xz: $vec, y: $typ) -> Self {
+                Self(xz.0, y, xz.1)
+            }
+
+            pub fn from_yz(x: $typ, yz: $vec) -> Self {
+                Self(x, yz.0, yz.1)
+            }
+        }
+    };
+}
