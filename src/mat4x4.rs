@@ -170,7 +170,7 @@ macro_rules! gen_mat4x4 {
 
 #[macro_export]
 macro_rules! impl_tf4x4 {
-    ($ident:ident, $vec3:ident, $quat:ident) => {
+    ($ident:ident, $vec3:ident, $quat:ident, $typ:ty) => {
         impl $ident {
             pub fn tf_matrix(pos: $vec3, rot: $quat, scale: $vec3) -> Self {
                 let right = scale.xvec().rotate(rot);
@@ -183,6 +183,26 @@ macro_rules! impl_tf4x4 {
                     [right.2, up.2, forw.2, pos.2],
                     [0.0, 0.0, 0.0, 1.0],
                 ]}
+            }
+
+            pub fn proj_matrix(aspect_ratio: $typ, fov: $typ, near: $typ, far: $typ) -> Self {
+                let tan = (fov * 0.5).tan();
+                return Self([
+                    [1.0 / (aspect_ratio * tan), 0.0,       0.0,                     0.0                       ],
+                    [0.0,                        1.0 / tan, 0.0,                     0.0                       ],
+                    [0.0,                        0.0,       far / (far - near),      -far * near / (far - near)],
+                    [0.0,                        0.0,       1.0,                     0.0                       ],
+                ]);
+            }
+
+            pub fn proj_matrix_vk(aspect_ratio: $typ, fov: $typ, near: $typ, far: $typ) -> Self {
+                let tan = (fov * 0.5).tan();
+                return Self([
+                    [1.0 / (aspect_ratio * tan), 0.0,        0.0,                     0.0                       ],
+                    [0.0,                        -1.0 / tan, 0.0,                     0.0                       ],
+                    [0.0,                        0.0,        far / (far - near),      -far * near / (far - near)],
+                    [0.0,                        0.0,        1.0,                     0.0                       ],
+                ]);
             }
         }
     };
