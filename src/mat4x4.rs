@@ -200,8 +200,8 @@ macro_rules! impl_tf4x4 {
                 return Self { rows: [
                     [1.0 / (aspect_ratio * tan),  0.0,        0.0,                 0.0                      ],
                     [0.0,                        -1.0 / tan,  0.0,                 0.0                      ],
-                    [0.0,                         0.0,       -far / (far - near), -far * near / (far - near)],
-                    [0.0,                         0.0,       -1.0,                 0.0                      ],
+                    [0.0,                         0.0,        far / (far - near), -far * near / (far - near)],
+                    [0.0,                         0.0,        1.0,                 0.0                      ],
                 ]};
             }
         }
