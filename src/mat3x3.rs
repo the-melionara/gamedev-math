@@ -47,7 +47,7 @@ macro_rules! gen_mat3x3 {
             }
 
             pub fn invert(&mut self) -> Option<()> {
-                let det = self.determinant();
+                let det = -self.determinant();
                 if det == 0.0 {
                     return None;
                 }
