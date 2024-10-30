@@ -57,19 +57,19 @@ macro_rules! gen_mat3x3 {
 
                 self.rows = [
                     [
-                        (src[1][1] * src[2][2] - src[2][1] * src[1][2]) * inv_det,
-                        -(src[1][0] * src[2][2] - src[2][0] * src[1][2]) * inv_det,
-                        (src[1][0] * src[2][1] - src[2][0] * src[1][1]) * inv_det,
+                        (src[1][2] * src[2][1] - src[1][1] * src[2][2]) * inv_det,
+                        -(src[0][2] * src[2][1] - src[0][1] * src[2][2]) * inv_det,
+                        (src[0][2] * src[1][1] - src[0][1] * src[1][2]) * inv_det,
                     ],
                     [
-                        -(src[0][1] * src[2][2] - src[2][1] * src[0][2]) * inv_det,
-                        (src[0][0] * src[2][2] - src[2][0] * src[0][2]) * inv_det,
-                        -(src[0][0] * src[2][1] - src[2][0] * src[0][1]) * inv_det,
+                        -(src[1][2] * src[2][0] - src[1][0] * src[2][2]) * inv_det,
+                        (src[0][2] * src[2][0] - src[0][0] * src[2][2]) * inv_det,
+                        -(src[0][2] * src[1][0] - src[0][0] * src[1][2]) * inv_det,
                     ],
                     [
-                        (src[0][1] * src[1][2] - src[1][1] * src[0][2]) * inv_det,
-                        -(src[0][0] * src[1][2] - src[1][0] * src[0][2]) * inv_det,
-                        (src[0][0] * src[1][1] - src[1][0] * src[0][1]) * inv_det,
+                        (src[1][1] * src[2][0] - src[1][0] * src[2][1]) * inv_det,
+                        -(src[0][1] * src[2][0] - src[0][0] * src[2][1]) * inv_det,
+                        (src[0][1] * src[1][0] - src[0][0] * src[1][1]) * inv_det,
                     ],
                 ];
 
