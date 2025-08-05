@@ -128,7 +128,7 @@ macro_rules! gen_mat4x4 {
                 let mut res = $ident { rows: [[0.0; 4]; 4] };
                 for i in 0..4 {
                     for j in 0..4 {
-                        res.rows[i][j] = self.row(i).dot(rhs.col(i));
+                        res.rows[i][j] = self.row(i).dot(rhs.col(j));
                     }
                 }
                 return res;
